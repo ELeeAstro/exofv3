@@ -1,5 +1,22 @@
 #!/bin/bash
 
+#SBATCH --job-name='test'
+#SBATCH --output=fms.out
+#SBATCH --error=fms.err
+##SBATCH --nodes=1
+#SBATCH --ntasks=24
+#SBATCH --cpus-per-task=1
+#SBATCH --mem-per-cpu=1G
+##SBATCH --partition=epyc2
+#SBATCH --partition=bdw
+#SBATCH --time=1-00:00:00
+
+source user_config
+
+START=0
+END=8
+INC=2
+
 #Minimal runscript for atmospheric dynamical cores
 
 #=====================================================================================================
@@ -78,12 +95,18 @@ fi
 # Load required environment modules (edit for different systems)
 #====================================================================================================
 set +x
-module load intel-compilers/2022
-module load openmpi/4.1.5-intel
-module load hdf5/1.14.0-intel-parallel
-module load netcdf/netcdf-c-4.9.2-parallel
-module load netcdf/netcdf-fortran-4.6.1
+module load Workspace_Home
+module load iimpi/2023a
+module load netCDF-Fortran/4.6.1-iimpi-2023a
+module load HDF5/1.14.0-iimpi-2023a
 set -x
+
+set OMP_NUM_THREADS=1
+set OMP_STACKSIZE=64M
+set I_MPI_PIN_DOMAIN=omp
+set I_MPI_OFI_PROVIDER=verbs
+set I_MPI_PIN_RESPECT_CPUSET=0
+unset I_MPI_PMI_LIBRARY
 
 #====================================================================================================
 # Setup working directory
@@ -126,6 +149,9 @@ fi
 #====================================================================================================
 # Prepend fortran files in srcmods directory to pathnames.
 # Use 'find' to make list of srcmod/*.f90 files. mkmf uses only the first instance of any file name.
+
+echo "MKMF"
+echo $skip_mkmf
 
 if [[ $skip_mkmf = false ]] ; then
     find $exp_home/srcmods/ -maxdepth 1 -iname "*.f90" -o -iname "*.F90" -o -iname "*.inc" -o -iname "*.c" -o -iname "*.h" -o -iname "*.fh" > $workdir/tmp_pathnames
@@ -192,9 +218,13 @@ cat $namelist | envsubst > input.nml
 cp $diagtable diag_table
 cp $fieldtable field_table
 cp $execdir/fms.x fms.x
+
+chmod --reference=$execdir/fms.x fms.x
+
 #--------------------------------------------------------------------------------------------------------
 # run the model with mpirun
-mpirun -np $npes --bind-to core --mca btl openib,self,vader --mca btl_openib_allow_ib 1 fms.x
+#mpirun -np $npes --bind-to core --mca btl openib,self,vader --mca btl_openib_allow_ib 1 fms.x
+mpirun -np $npes ./fms.x
 
 if [[ $? != 0 ]] ; then echo "Error in model run" ; exit ; fi
 #--------------------------------------------------------------------------------------------------------
@@ -238,8 +268,8 @@ for File in $latlonfiles ; do
 done
 
 # Ensure the new tiles have the hybrid sigma data for vertical regridding
-ncks -A -v pk,bk atmos_static.tile1.nc atmos_daily.nc
-ncks -A -v pk,bk atmos_static.tile1.nc atmos_average.nc
+/storage/homefs/gl20y334/miniforge3/bin/ncks -A -v pk,bk atmos_static.tile1.nc atmos_daily.nc
+/storage/homefs/gl20y334/miniforge3/bin/ncks -A -v pk,bk atmos_static.tile1.nc atmos_average.nc
 
 #=========================================================================================
 # Vertically interpolate from hybrid sigma coord to constant pressure levels

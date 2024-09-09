@@ -9,12 +9,18 @@
 # Will be system dependent, change as necessary. These are set up for
 # use on Oxford servers
 #===================================================================
-module load intel-compilers/2022
-module load openmpi/4.1.5-intel
-module load hdf5/1.14.0-intel-parallel
-module load netcdf/netcdf-c-4.9.2-parallel
-module load netcdf/netcdf-fortran-4.6.1
+module load Workspace_Home
+module load iimpi/2023a
+module load netCDF-Fortran/4.6.1-iimpi-2023a
+module load HDF5/1.14.0-iimpi-2023a
 #===================================================================
+
+set OMP_NUM_THREADS=1
+set OMP_STACKSIZE=64M
+set I_MPI_PIN_DOMAIN=omp
+set I_MPI_OFI_PROVIDER=verbs
+set I_MPI_PIN_RESPECT_CPUSET=0
+unset I_MPI_PMI_LIBRARY
 
 nctools_dir="../src/FRE-NCtools"
 install_dir="${PWD}/../postprocessing"

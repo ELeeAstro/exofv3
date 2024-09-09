@@ -1,7 +1,7 @@
  &main_nml
      days = ${run_time}
      dt_atmos = 600
-     atmos_nthreads = 2
+     atmos_nthreads = 1
 /
 &fms_nml
     clock_grain = 'LOOP'
@@ -28,11 +28,11 @@
     npy = 25
     npz = 60
     ntiles = 6
-    do_held_suarez = .false.
+    do_Held_Suarez = .false.
     adiabatic = .false.
-    print_freq = 24
+    print_freq = 1
     grid_type = 0
-    warm_start = ${warm_start}
+    warm_start = .false.
     vtdm4 = 0.1
     io_layout = 2,2
     nwat = 0
@@ -47,7 +47,7 @@
     hydrostatic = .true.
     n_sponge = 0
     non_dilute = .true.
-    p_ref = ${psurf}
+    p_ref = 1e5  
     no_dycore = .false.
     fill = .false.
 /
@@ -129,13 +129,13 @@
 
 &fv_eta_nml
     flexible_grid = .true.
-    pbot = ${psurf}
+    pbot = 1e5
     pup = 0.1
     plin = 1.
 /
 
 &initialisation_nml
-    init_type = 5
+    init_type = 1
     Ts = 800
     T_strat = 200.
     S = 680.0
@@ -143,7 +143,7 @@
     tau_sw = 100.0
     tau_lw = 5000.0
     tint =50.0
-    surface_pressure = ${psurf}
+    surface_pressure = 1e5
     tp_file='$net2/moist_subnep/soc-rad-conv-fort/fortran/prelim_runs/init_condition.nc'
 /
 
